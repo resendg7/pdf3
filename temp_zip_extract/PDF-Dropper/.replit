@@ -1,0 +1,35 @@
+modules = ["nodejs-20"]
+[nix]
+channel = "stable-25_05"
+packages = ["unzip", "cacert", "glib", "nss", "nspr", "atk", "cups", "dbus", "expat", "xorg.libxcb", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "libdrm", "mesa", "xorg.libxshmfence", "libxkbcommon", "pango", "cairo", "at-spi2-atk", "xorg.libXcursor", "xorg.libXi", "xorg.libXrender", "xorg.libXtst", "alsa-lib", "libgbm", "at-spi2-core", "nss_latest"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "dev server"
+
+[[workflows.workflow]]
+name = "dev server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd /home/runner/workspace/PDF-Dropper && npm run dev"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[agent]
+expertMode = true
+
+[[ports]]
+localPort = 5000
+externalPort = 80
