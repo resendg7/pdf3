@@ -1,0 +1,1 @@
+ALTER TABLE "payloads" RENAME COLUMN "js_content" TO "file_content";

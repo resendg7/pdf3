@@ -5,7 +5,7 @@ import { z } from "zod";
 export const payloads = pgTable("payloads", {
   id: serial("id").primaryKey(),
   filename: text("filename").notNull(),
-  jsContent: text("js_content").notNull(),
+  fileContent: text("file_content").notNull(),
   pdfData: text("pdf_data").notNull(), // Base64 encoded PDF
   contentType: text("content_type").notNull().default("application/pdf"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -13,7 +13,7 @@ export const payloads = pgTable("payloads", {
 
 export const insertPayloadSchema = createInsertSchema(payloads).pick({
   filename: true,
-  jsContent: true,
+  fileContent: true,
 });
 
 export type Payload = typeof payloads.$inferSelect;

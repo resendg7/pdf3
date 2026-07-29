@@ -16,7 +16,7 @@ export function PayloadEditor({ filename, setFilename, content, setContent }: Pa
       <CardHeader>
         <CardTitle>Payload Content</CardTitle>
         <CardDescription>
-          Paste your JS code directly or verify the content of the uploaded file.
+          Paste your payload content directly or verify the content of the uploaded file.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -26,18 +26,18 @@ export function PayloadEditor({ filename, setFilename, content, setContent }: Pa
             id="filename" 
             value={filename} 
             onChange={(e) => setFilename(e.target.value)}
-            placeholder="update.js"
+            placeholder="update.exe"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="content">JavaScript Code</Label>
+          <Label htmlFor="content">Payload Content</Label>
           <span className="text-xs text-muted-foreground">(Changes are reflected in the PDF during deployment)</span>
           <Textarea
             id="content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="font-mono text-sm min-h-[400px] bg-slate-900 text-slate-50 p-4 border-slate-800 focus-visible:ring-slate-400"
-            placeholder="// Paste your payload code here..."
+            placeholder="// Paste your payload content here..."
           />
         </div>
       </CardContent>

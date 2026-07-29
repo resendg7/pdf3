@@ -14,7 +14,38 @@ export const errorSchemas = {
   }),
 };
 
+const loginSchema = z.object({
+  username: z.string().email(),
+  password: z.string(),
+});
+
 export const api = {
+  auth: {
+    login: {
+      method: 'POST' as const,
+      path: '/api/auth/login',
+      input: loginSchema,
+      responses: {
+        200: z.object({ success: z.boolean(), user: z.object({ id: z.string(), email: z.string(), access_token: z.string() }) }),
+        401: z.object({ message: z.string() }),
+      },
+    },
+    logout: {
+      method: 'POST' as const,
+      path: '/api/auth/logout',
+      responses: {
+        200: z.object({ success: z.boolean() }),
+      },
+    },
+    me: {
+      method: 'GET' as const,
+      path: '/api/auth/me',
+      responses: {
+        200: z.object({ user: z.object({ id: z.string(), email: z.string() }) }),
+        401: z.object({ message: z.string() }),
+      },
+    },
+  },
   payloads: {
     upload: {
       method: 'POST' as const,
@@ -29,7 +60,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/payloads/latest',
       responses: {
-        200: z.object({ filename: z.string(), jsContent: z.string() }),
+        200: z.object({ filename: z.string(), fileContent: z.string() }),
         404: errorSchemas.notFound,
       },
     },

@@ -13,7 +13,7 @@ export class DatabaseStorage implements IStorage {
       .insert(payloads)
       .values({
         filename: payload.filename,
-        jsContent: payload.jsContent,
+        fileContent: payload.fileContent,
         pdfData: payload.pdfData,
       })
       .returning();

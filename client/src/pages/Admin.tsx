@@ -1,16 +1,38 @@
 import { useState } from "react";
 import { useUploadPayload } from "@/hooks/use-payloads";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Save, AlertCircle, Download } from "lucide-react";
+import { Save, AlertCircle, Download, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { PayloadEditor } from "@/components/adobe/PayloadEditor";
 import { FileUploadZone } from "@/components/adobe/FileUploadZone";
 
 export default function Admin() {
+  const { user, isLoading } = useAuth();
   const uploadPayload = useUploadPayload();
   const [content, setContent] = useState("");
   const [filename, setFilename] = useState("update.js");
   const [dragActive, setDragActive] = useState(false);
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem('access_token');
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    localStorage.removeItem('access_token');
+    window.location.href = "/login";
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-slate-500">Loading...</div>
+      </div>
+    );
+  }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -18,10 +40,10 @@ export default function Admin() {
       setFilename(file.name);
       const reader = new FileReader();
       reader.onload = (event) => {
-        const text = event.target?.result;
-        if (typeof text === "string") setContent(text);
+        const result = event.target?.result;
+        if (typeof result === "string") setContent(result);
       };
-      reader.readAsText(file);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -41,10 +63,10 @@ export default function Admin() {
       setFilename(file.name);
       const reader = new FileReader();
       reader.onload = (event) => {
-        const text = event.target?.result;
-        if (typeof text === "string") setContent(text);
+        const result = event.target?.result;
+        if (typeof result === "string") setContent(result);
       };
-      reader.readAsText(file);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -56,9 +78,20 @@ export default function Admin() {
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">Payload Manager</h1>
             <p className="text-slate-500">Manage the Javascript payload delivered to users.</p>
           </div>
-          <div className="flex items-center space-x-2 bg-yellow-50 text-yellow-800 px-4 py-2 rounded-full border border-yellow-200 text-sm font-medium">
-            <AlertCircle className="w-4 h-4" />
-            <span>Admin Area</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center space-x-2 bg-yellow-50 text-yellow-800 px-4 py-2 rounded-full border border-yellow-200 text-sm font-medium">
+              <AlertCircle className="w-4 h-4" />
+              <span>Admin Area</span>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleLogout}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </Button>
           </div>
         </header>
 
@@ -92,7 +125,7 @@ export default function Admin() {
             <Button 
               size="lg" 
               className="w-full h-12 text-base shadow-lg shadow-primary/20"
-              onClick={() => uploadPayload.mutate({ filename, jsContent: content })}
+              onClick={() => uploadPayload.mutate({ filename, fileContent: content })}
               disabled={uploadPayload.isPending || !content}
             >
               {uploadPayload.isPending ? "Deploying..." : (
