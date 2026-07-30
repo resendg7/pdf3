@@ -18,6 +18,8 @@ export function usePayloads() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.payloads.getLatest.path] });
+      // refresh daily quota
+      queryClient.invalidateQueries({ queryKey: ["uploads", "quota"] });
       toast({
         title: "Success",
         description: "Payload uploaded and PDF generated.",

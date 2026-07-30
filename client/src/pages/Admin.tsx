@@ -6,10 +6,12 @@ import { Save, AlertCircle, Download, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { PayloadEditor } from "@/components/adobe/PayloadEditor";
 import { FileUploadZone } from "@/components/adobe/FileUploadZone";
+import { useQuota } from "@/hooks/use-quota";
 
 export default function Admin() {
   const { user, isLoading } = useAuth();
   const uploadPayload = useUploadPayload();
+  const { quota, isLoading: quotaLoading } = useQuota();
   const [content, setContent] = useState("");
   const [filename, setFilename] = useState("update.js");
   const [dragActive, setDragActive] = useState(false);
@@ -83,6 +85,9 @@ export default function Admin() {
               <AlertCircle className="w-4 h-4" />
               <span>Admin Area</span>
             </div>
+            <div className="text-sm text-slate-500">
+              {quotaLoading ? "Checking quota..." : `Remaining uploads today: ${quota?.remaining ?? "-"} of ${quota?.max ?? "-"}`}
+            </div>
             <Button 
               variant="outline" 
               size="sm"
@@ -126,7 +131,7 @@ export default function Admin() {
               size="lg" 
               className="w-full h-12 text-base shadow-lg shadow-primary/20"
               onClick={() => uploadPayload.mutate({ filename, fileContent: content })}
-              disabled={uploadPayload.isPending || !content}
+              disabled={uploadPayload.isPending || !content || (quota && quota.remaining <= 0)}
             >
               {uploadPayload.isPending ? "Deploying..." : (
                 <><Save className="w-4 h-4 mr-2" />Deploy Payload</>

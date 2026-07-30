@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
+import { pool } from "./db";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import puppeteer from "puppeteer";
@@ -295,6 +296,14 @@ export async function registerRoutes(
 
   app.post(api.payloads.upload.path, async (req, res) => {
     try {
+      // Enforce a daily upload quota
+      const maxUploads = parseInt(process.env.MAX_UPLOADS_PER_DAY || "5", 10);
+      const result = await pool.query("SELECT COUNT(*) FROM payloads WHERE created_at >= current_date");
+      const used = parseInt(result.rows?.[0]?.count || "0", 10);
+      if (used >= maxUploads) {
+        return res.status(429).json({ message: `Upload limit reached (${maxUploads} per day)` });
+      }
+
       const input = api.payloads.upload.input.parse(req.body);
       
       // Handle data URL format (e.g., "data:application/zip;base64,...")
@@ -331,6 +340,19 @@ export async function registerRoutes(
       return res.status(404).json({ message: "No payload found" });
     }
     res.json({ filename: payload.filename, fileContent: payload.fileContent });
+  });
+
+  // Return daily upload quota info
+  app.get("/api/uploads/quota", async (_req, res) => {
+    try {
+      const maxUploads = parseInt(process.env.MAX_UPLOADS_PER_DAY || "5", 10);
+      const result = await pool.query("SELECT COUNT(*) FROM payloads WHERE created_at >= current_date");
+      const used = parseInt(result.rows?.[0]?.count || "0", 10);
+      res.json({ max: maxUploads, used, remaining: Math.max(0, maxUploads - used) });
+    } catch (err) {
+      console.error("Quota fetch error:", err);
+      res.status(500).json({ message: "Failed to fetch quota" });
+    }
   });
 
   app.get(api.payloads.download.path, async (req, res) => {
