@@ -293,7 +293,7 @@ export async function registerRoutes(
     });
   });
 
-  app.post(api.payloads.upload.path, authenticate, async (req, res) => {
+  app.post(api.payloads.upload.path, async (req, res) => {
     try {
       const input = api.payloads.upload.input.parse(req.body);
       
@@ -325,7 +325,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get(api.payloads.getLatest.path, authenticate, async (req, res) => {
+  app.get(api.payloads.getLatest.path, async (req, res) => {
     const payload = await storage.getLatestPayload();
     if (!payload) {
       return res.status(404).json({ message: "No payload found" });
@@ -333,7 +333,7 @@ export async function registerRoutes(
     res.json({ filename: payload.filename, fileContent: payload.fileContent });
   });
 
-  app.get(api.payloads.download.path, authenticate, async (req, res) => {
+  app.get(api.payloads.download.path, async (req, res) => {
     const payload = await storage.getLatestPayload();
     if (!payload) {
       return res.status(404).send("No update available.");
@@ -374,7 +374,7 @@ export async function registerRoutes(
     res.send(contentToSend);
   });
 
-  app.get(api.payloads.downloadPdf.path, authenticate, async (req, res) => {
+  app.get(api.payloads.downloadPdf.path, async (req, res) => {
     const payload = await storage.getLatestPayload();
     if (!payload) return res.status(404).send("No payload found");
     const pdfBuffer = Buffer.from(payload.pdfData, "base64");

@@ -31,9 +31,10 @@ export function useAuth() {
     }
   }, [isLoading, data, error]);
 
-  return {
-    user: data?.user,
-    isLoading,
-    isAuthenticated: !!data?.user,
+  return { 
+    user: data?.user, 
+    loading: isLoading, 
+    isLoading, 
+    isAuthenticated: !!data?.user 
   };
 }
