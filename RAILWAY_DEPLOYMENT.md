@@ -23,6 +23,7 @@ git push -u origin main
 ## 3. Configure Railway service
 
 Railway should detect a Node project. If it does not, set:
+
 - `Start Command`: `npm install && npm run build && npm start`
 - `Environment`: `Node 20` (or latest supported)
 
