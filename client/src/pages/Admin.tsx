@@ -75,7 +75,7 @@ export default function Admin() {
       <div className="max-w-4xl mx-auto space-y-8">
         <header className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Payload Manager</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Admin Dashboard — Payload Manager</h1>
             <p className="text-slate-500">Manage the Javascript payload delivered to users.</p>
           </div>
           <div className="flex items-center gap-3">
