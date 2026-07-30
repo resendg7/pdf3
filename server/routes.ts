@@ -294,6 +294,32 @@ export async function registerRoutes(
     });
   });
 
+  app.post(api.auth.changePassword.path, authenticate, async (req, res) => {
+    try {
+      const input = api.auth.changePassword.input.parse(req.body);
+      const user = (req as any).user;
+
+      const { error } = await supabase.auth.admin.updateUserById(user.id, {
+        password: input.newPassword,
+      });
+
+      if (error) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Password change error:", err);
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+          field: err.errors[0].path.join('.'),
+        });
+      }
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
   app.post(api.payloads.upload.path, async (req, res) => {
     try {
       // Enforce a daily upload quota

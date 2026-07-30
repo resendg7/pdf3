@@ -45,6 +45,16 @@ export const api = {
         401: z.object({ message: z.string() }),
       },
     },
+    changePassword: {
+      method: 'POST' as const,
+      path: '/api/auth/change-password',
+      input: z.object({ newPassword: z.string().min(6) }),
+      responses: {
+        200: z.object({ success: z.boolean() }),
+        400: errorSchemas.validation,
+        401: z.object({ message: z.string() }),
+      },
+    },
   },
   payloads: {
     upload: {
