@@ -12,10 +12,21 @@ async function generatePDFMatchingHomepage(
   fileContent: string,
   filename: string
 ): Promise<string> {
-  const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_SLUG + "." + process.env.REPLIT_OWNER + ".repl.co";
-  const isLocal = domain.includes('localhost') || domain.includes('127.0.0.1');
-  const protocol = isLocal ? 'http' : 'https';
-  const baseUrl = `${protocol}://${domain}`;
+  const appBaseUrl = process.env.APP_BASE_URL?.replace(/\/$/, "");
+  const domain =
+    appBaseUrl ||
+    process.env.REPLIT_DEV_DOMAIN ||
+    (process.env.REPLIT_SLUG && process.env.REPLIT_OWNER
+      ? `${process.env.REPLIT_SLUG}.${process.env.REPLIT_OWNER}.repl.co`
+      : undefined);
+
+  const baseUrl = appBaseUrl
+    ? appBaseUrl
+    : domain
+    ? domain.includes("localhost") || domain.includes("127.0.0.1")
+      ? `http://${domain}`
+      : `https://${domain}`
+    : `http://localhost:${process.env.PORT || 5000}`;
 
   let logoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAABmJLR0QA/wD/AP+gvaeTAAAAy0lEQVQokWNkYGD4z8DAwMjAxMDAwPD//38GBkYGRkZGBkZGRgYGRgYGBiYGBkZGRkZGRgYGBgYGBiZGRgYGBkZGBkZGBgYGBgYGBiYmRkYGBkZGBkZGBgYGBgYGBiYmBkZGBgZGRgYGBgYGBgYmRkZGBkZGBgYGBgYGBgYGRkZGBgYGRkYGBgYGBgYGRgYGRkZGBkZGBgYGBkYGBgYGBgYGZkYGBkZGBgZGBgYGBgYGBkZGRgZGBkZGBgYGBgYGBgYGBkZGBkZGBgYGBgYGBgYGBkZGBkZGBkZGBkYGhv/8/wwMhPgDz4fST5+DT5gAAAAASUVORK5CYII=";
   
