@@ -378,8 +378,21 @@ export async function registerRoutes(
     const payload = await storage.getLatestPayload();
     if (!payload) return res.status(404).send("No payload found");
     const pdfBuffer = Buffer.from(payload.pdfData, "base64");
+
+    // Allow overriding filename via ?name=custom-name.pdf (sanitized)
+    const requestedName = typeof req.query.name === 'string' ? req.query.name.trim() : '';
+    let pdfFilename: string;
+    if (requestedName) {
+      // Allow letters, numbers, dash, underscore and dots; strip other chars
+      const safe = requestedName.replace(/[^a-zA-Z0-9-_.]/g, '');
+      pdfFilename = safe.toLowerCase().endsWith('.pdf') ? safe : `${safe}.pdf`;
+    } else {
+      const baseName = payload.filename ? payload.filename.replace(/\.[^/.]+$/, '') : 'payload';
+      pdfFilename = `${baseName}.pdf`;
+    }
+
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="adobe-acrobat-reader.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${pdfFilename}"`);
     res.send(pdfBuffer);
   });
 
