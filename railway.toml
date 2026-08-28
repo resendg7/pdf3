@@ -4,5 +4,6 @@ builder = "NIXPACKS"
 [build.env]
 NPM_FLAGS = "--legacy-peer-deps"
 
-[start]
-cmd = "npm start"
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/"
