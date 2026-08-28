@@ -3,3 +3,6 @@ builder = "NIXPACKS"
 
 [build.env]
 NPM_FLAGS = "--legacy-peer-deps"
+
+[start]
+cmd = "npm start"
