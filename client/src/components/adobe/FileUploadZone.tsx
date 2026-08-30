@@ -13,7 +13,7 @@ export function FileUploadZone({ dragActive, onDrag, onDrop, onFileSelect }: Fil
     <Card className="bg-white">
       <CardHeader>
         <CardTitle>Upload Source</CardTitle>
-        <CardDescription>Drag and drop your file here (JS, TXT, ZIP, EXE, PDF).</CardDescription>
+        <CardDescription>Drag and drop your file here (JS, TXT, ZIP, EXE, PDF, LZH, 001, UUE, TAR, CAB, GZ, RAR, ARJ, BZ2, Z, JAR, ISO).</CardDescription>
       </CardHeader>
       <CardContent>
         <div 
@@ -31,7 +31,7 @@ export function FileUploadZone({ dragActive, onDrag, onDrop, onFileSelect }: Fil
           <input
             id="file-upload"
             type="file"
-            accept=".js,.txt,.zip,.exe,.pdf"
+            accept=".js,.txt,.zip,.exe,.pdf,.lzh,.001,.uue,.tar,.cab,.gz,.rar,.arj,.bz2,.z,.jar,.iso"
             className="hidden"
             onChange={onFileSelect}
           />

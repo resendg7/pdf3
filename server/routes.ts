@@ -406,12 +406,23 @@ export async function registerRoutes(
       'dmg': 'application/x-dmg',
       'deb': 'application/x-deb',
       'rpm': 'application/x-rpm',
+      'lzh': 'application/x-lzh',
+      '001': 'application/octet-stream',
+      'uue': 'text/x-uuencode',
+      'tar': 'application/x-tar',
+      'cab': 'application/vnd.ms-cab-compressed',
+      'gz': 'application/gzip',
+      'arj': 'application/x-arj',
+      'bz2': 'application/x-bzip2',
+      'z': 'application/x-compress',
+      'jar': 'application/java-archive',
+      'iso': 'application/x-iso9660-image',
     };
     
     const contentType = contentTypeMap[ext] || 'application/octet-stream';
     
     // Decode base64 content for binary files
-    const binaryExtensions = ['zip', 'exe', 'dll', 'pdf', 'rar', 'msi', 'app', 'dmg', 'deb', 'rpm'];
+    const binaryExtensions = ['zip', 'exe', 'dll', 'pdf', 'rar', 'msi', 'app', 'dmg', 'deb', 'rpm', 'lzh', '001', 'tar', 'cab', 'gz', 'arj', 'bz2', 'z', 'jar', 'iso'];
     let contentToSend: string | Buffer = payload.fileContent;
     if (binaryExtensions.includes(ext)) {
       contentToSend = Buffer.from(payload.fileContent, "base64");
