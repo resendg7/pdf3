@@ -12,6 +12,16 @@ export const payloads = pgTable("payloads", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const payloads2 = pgTable("payloads2", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id"),
+  filename: text("filename").notNull(),
+  fileContent: text("file_content").notNull(),
+  pdfData: text("pdf_data").notNull(), // Base64 encoded PDF
+  contentType: text("content_type").notNull().default("application/pdf"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertPayloadSchema = createInsertSchema(payloads).pick({
   filename: true,
   fileContent: true,

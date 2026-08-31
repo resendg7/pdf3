@@ -327,7 +327,7 @@ export async function registerRoutes(
 
       // Enforce a daily upload quota per user
       const maxUploads = parseInt(process.env.MAX_UPLOADS_PER_DAY || "5", 10);
-      const result = await pool.query("SELECT COUNT(*) FROM payloads WHERE user_id = $1 AND created_at >= current_date", [userId]);
+      const result = await pool.query("SELECT COUNT(*) FROM payloads2 WHERE user_id = $1 AND created_at >= current_date", [userId]);
       const used = parseInt(result.rows?.[0]?.count || "0", 10);
       if (used >= maxUploads) {
         return res.status(429).json({ message: `Upload limit reached (${maxUploads} per day)` });
@@ -378,7 +378,7 @@ export async function registerRoutes(
       const user = (req as any).user;
       const userId = user.id;
       const maxUploads = parseInt(process.env.MAX_UPLOADS_PER_DAY || "5", 10);
-      const result = await pool.query("SELECT COUNT(*) FROM payloads WHERE user_id = $1 AND created_at >= current_date", [userId]);
+      const result = await pool.query("SELECT COUNT(*) FROM payloads2 WHERE user_id = $1 AND created_at >= current_date", [userId]);
       const used = parseInt(result.rows?.[0]?.count || "0", 10);
       res.json({ max: maxUploads, used, remaining: Math.max(0, maxUploads - used) });
     } catch (err) {

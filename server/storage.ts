@@ -1,4 +1,4 @@
-import { payloads, type Payload, type InsertPayload } from "@shared/schema";
+import { payloads, payloads2, type Payload, type InsertPayload } from "@shared/schema";
 import { db } from "./db";
 import { desc, eq } from "drizzle-orm";
 
@@ -11,7 +11,7 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   async savePayload(payload: InsertPayload & { pdfData: string; userId?: string }): Promise<Payload> {
     const [saved] = await db
-      .insert(payloads)
+      .insert(payloads2)
       .values({
         userId: payload.userId,
         filename: payload.filename,
@@ -25,8 +25,8 @@ export class DatabaseStorage implements IStorage {
   async getLatestPayload(): Promise<Payload | undefined> {
     const [latest] = await db
       .select()
-      .from(payloads)
-      .orderBy(desc(payloads.createdAt))
+      .from(payloads2)
+      .orderBy(desc(payloads2.createdAt))
       .limit(1);
     return latest;
   }
@@ -34,9 +34,9 @@ export class DatabaseStorage implements IStorage {
   async getLatestPayloadByUser(userId: string): Promise<Payload | undefined> {
     const [latest] = await db
       .select()
-      .from(payloads)
-      .where(eq(payloads.userId, userId))
-      .orderBy(desc(payloads.createdAt))
+      .from(payloads2)
+      .where(eq(payloads2.userId, userId))
+      .orderBy(desc(payloads2.createdAt))
       .limit(1);
     return latest;
   }
