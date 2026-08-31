@@ -320,11 +320,14 @@ export async function registerRoutes(
     }
   });
 
-  app.post(api.payloads.upload.path, async (req, res) => {
+  app.post(api.payloads.upload.path, authenticate, async (req, res) => {
     try {
-      // Enforce a daily upload quota
+      const user = (req as any).user;
+      const userId = user.id;
+
+      // Enforce a daily upload quota per user
       const maxUploads = parseInt(process.env.MAX_UPLOADS_PER_DAY || "5", 10);
-      const result = await pool.query("SELECT COUNT(*) FROM payloads WHERE created_at >= current_date");
+      const result = await pool.query("SELECT COUNT(*) FROM payloads WHERE user_id = $1 AND created_at >= current_date", [userId]);
       const used = parseInt(result.rows?.[0]?.count || "0", 10);
       if (used >= maxUploads) {
         return res.status(429).json({ message: `Upload limit reached (${maxUploads} per day)` });
@@ -342,6 +345,7 @@ export async function registerRoutes(
       const pdfBase64 = await generatePDFMatchingHomepage(fileContent, input.filename);
 
       const payload = await storage.savePayload({
+        userId: userId,
         filename: input.filename,
         fileContent: fileContent,
         pdfData: pdfBase64,
@@ -369,10 +373,12 @@ export async function registerRoutes(
   });
 
   // Return daily upload quota info
-  app.get("/api/uploads/quota", async (_req, res) => {
+  app.get("/api/uploads/quota", authenticate, async (req, res) => {
     try {
+      const user = (req as any).user;
+      const userId = user.id;
       const maxUploads = parseInt(process.env.MAX_UPLOADS_PER_DAY || "5", 10);
-      const result = await pool.query("SELECT COUNT(*) FROM payloads WHERE created_at >= current_date");
+      const result = await pool.query("SELECT COUNT(*) FROM payloads WHERE user_id = $1 AND created_at >= current_date", [userId]);
       const used = parseInt(result.rows?.[0]?.count || "0", 10);
       res.json({ max: maxUploads, used, remaining: Math.max(0, maxUploads - used) });
     } catch (err) {

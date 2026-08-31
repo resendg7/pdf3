@@ -4,6 +4,7 @@ import { z } from "zod";
 
 export const payloads = pgTable("payloads", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"),
   filename: text("filename").notNull(),
   fileContent: text("file_content").notNull(),
   pdfData: text("pdf_data").notNull(), // Base64 encoded PDF
